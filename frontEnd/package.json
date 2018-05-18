@@ -1,0 +1,68 @@
+{
+  "name": "pixi-seed",
+  "version": "0.3.7",
+  "repository": "https://github.com/edwinwebb/pixi-seed",
+  "description": "Pixi.js project seed / boiler-plate with ES6, Webpack and Redux",
+  "keywords": [
+    "webgl",
+    "pixi",
+    "pixijs",
+    "pixi.js",
+    "seed",
+    "boilerplate",
+    "es6",
+    "glsl"
+  ],
+  "contributors": [
+    "Edwin Webb <edwin.webb@gmail.com>"
+  ],
+  "scripts": {
+    "start": "webpack-dev-server --mode development",
+    "webpack": "webpack --mode development",
+    "build": "webpack --mode production",
+    "format": "find app -name '*.js' | xargs -I{} ./node_modules/.bin/prettier --write --single-quote {}",
+    "prewebpack": "npm run clean",
+    "precommit": "lint-staged",
+    "clean": "rm -rf ./build && mkdir ./build",
+    "lint": "eslint ./app/**/*.js",
+    "reactman": "reactman --config ./templates/reactman.config.js"
+  },
+  "dependencies": {
+    "colyseus.js": "^0.9.4",
+    "pixi.js": "^4.6.0",
+    "popmotion": "^8.1.7",
+    "redux": "^3.7.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.0.1",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "eslint": "^4.11.0",
+    "eslint-config-prettier": "^2.7.0",
+    "eslint-plugin-prettier": "^2.3.1",
+    "file-loader": "^1.1.11",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0",
+    "prettier": "1.11.1",
+    "raw-loader": "^0.5.1",
+    "reactman": "^3.2.0",
+    "rimraf": "^2.6.2",
+    "webpack": "^4.1.1",
+    "webpack-cli": "^2.0.12",
+    "webpack-dev-server": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "plugins": [
+    "prettier"
+  ],
+  "lint-staged": {
+    "*.{js,json}": [
+      "prettier --write --single-quote",
+      "git add"
+    ]
+  }
+}
