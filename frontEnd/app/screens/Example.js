@@ -153,8 +153,8 @@ export default class Example extends Container {
             spell: {
                 type: 'force',
                 target: {
-                    x: this.mousepos.x,
-                    y: this.mousepos.y
+                    x: this.mousepos.x/this.renderer.view.width,
+                    y: this.mousepos.y/this.renderer.view.height
                 },
             }
         });
