@@ -23,4 +23,4 @@ export default (state = defaultState, action = {}) => {
   }
 };
 
-export const tick = () => ({ type: TICK });
+export const tick = () => ({type: TICK});

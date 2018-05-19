@@ -1,6 +1,7 @@
 import { Room, EntityMap, Client, nosync } from "colyseus";
 
 const MOVE_SPEED = 0.003;
+const SPELL_MOVE_SPEED = 0.004;
 export class State {
     players: EntityMap<Player> = {};
     spells: EntityMap<Spell> = {};
@@ -23,6 +24,21 @@ export class State {
                 case 'd': this.players[id].y += MOVE_SPEED; break;
                 case 'l': this.players[id].x -= MOVE_SPEED; break;
                 case 'r': this.players[id].x += MOVE_SPEED; break;
+            }
+        }
+    }
+    update() {
+        //simulate spell movement
+        for (const id in this.spells) {
+            const xDistance = this.spells[id].targetX - this.spells[id].x;
+            const yDistance = this.spells[id].targetY - this.spells[id].y;
+            const length = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+            if(length < SPELL_MOVE_SPEED){
+
+            }
+            else {
+                this.spells[id].x += (xDistance/length)*SPELL_MOVE_SPEED;
+                this.spells[id].y += (yDistance/length)*SPELL_MOVE_SPEED;
             }
         }
     }
@@ -53,6 +69,10 @@ export class BattleRoom extends Room<State> {
         console.log("BattleRoom created!", options);
 
         this.setState(new State());
+        this.setSimulationInterval(this.update.bind(this));
+    }
+    update() {
+        this.state.update();
     }
 
     onJoin (client) {

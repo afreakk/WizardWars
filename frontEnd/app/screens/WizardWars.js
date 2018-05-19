@@ -2,27 +2,44 @@ import {
     Container,
     Point
 } from 'pixi.js';
-
-import {
-    canvasHeight,
-    canvasWidth
-} from '../constants/AppConstants';
-import Background from '../displayobjects/Background/Background.js';
-import Logo from '../displayobjects/Logo/Logo';
-import RedLine from '../displayobjects/RedLine/RedLine';
-import {
-    AnimationStore
-} from '../stores/Store';
-import Player from '../displayobjects/Player/Player';
-
-import Thingie from '../displayobjects/Thingie/Thingie';
+import { AnimationStore } from '../stores/Store';
+import Store from '../stores/Store';
 import {Client} from 'colyseus.js';
 
-const isNear = (p1, p2) => {
+const getLength = (p1, p2) => {
     const a = p1.x - p2.x;
     const b = p1.y - p2.y;
-    const c = Math.sqrt(a * a + b * b);
-    return c < 100;
+    return Math.sqrt(a * a + b * b);
+};
+
+const getBackground = (width, height) => {
+    const bg = new PIXI.Graphics()
+        .beginFill(0x112211)
+        .drawRect(0,0, width, height);
+    return bg;
+};
+
+const spellFilter = new PIXI.filters.BlurFilter();
+spellFilter.blur = 3;
+const createSpell = (x,y) => {
+    const spell = new PIXI.Graphics()
+        .beginFill(0x00ff00)
+        .drawCircle(0,0,5);
+    // Add a blur filter
+    spell.filters = [spellFilter];
+    spell.position.set(x,y);
+    return spell;
+};
+
+const playerFilter = new PIXI.filters.BlurFilter();
+playerFilter.blur = 2;
+const createPlayer = (x,y) => {
+    const player = new PIXI.Graphics()
+        .beginFill(0x0000ff)
+        .drawCircle(0,0,10);
+    player.filters = [playerFilter];
+    player.position.set(x,y);
+    return player;
 };
 
 class KeyboardMovements {
@@ -61,19 +78,14 @@ class KeyboardMovements {
         }
     }
 }
-/**
- * Main Display Object
- *
- * @exports Example
- * @extends Container
- */
-export default class Example extends Container {
+
+export default class WizardWars extends Container {
     constructor(...args) {
-        var bg = new Background();
         super(...args);
         this.keyboardMovements = new KeyboardMovements();
-        //const logo = new Logo();
-        this.addChild(bg);
+        const {canvasWidth, canvasHeight} = Store.getState().Renderer;
+        this.bg = getBackground(canvasWidth, canvasHeight);
+        this.addChild(this.bg);
         this.interactive = true;
         this.mousepos = new Point(500, 500);
         this.client = new Client("ws://localhost:9100");
@@ -85,6 +97,12 @@ export default class Example extends Container {
         this.players = {};
         this.spells = {};
         AnimationStore.subscribe(this.animationUpdate.bind(this));
+        Store.subscribe(this.combiStoreChanged.bind(this));
+    }
+    combiStoreChanged() {
+        const {canvasWidth, canvasHeight} = Store.getState().Renderer;
+        this.bg.width = canvasWidth;
+        this.bg.height = canvasHeight;
     }
     setRenderer(renderer) {
         this.renderer = renderer;
@@ -119,7 +137,7 @@ export default class Example extends Container {
         if(change.operation === 'add'){
             const x = change.value.x*this.renderer.view.width;
             const y = change.value.y*this.renderer.view.height;
-            this.spells[change.path.id] = new Thingie(x,y);
+            this.spells[change.path.id] = createSpell(x,y);
             this.addChild(this.spells[change.path.id]);
         }
         if(change.operation === 'remove'){
@@ -132,7 +150,7 @@ export default class Example extends Container {
             const x = change.value.x*this.renderer.view.width;
             const y = change.value.y*this.renderer.view.height;
             console.log('pos',x,y);
-            this.players[change.path.id] = new Player(x,y);
+            this.players[change.path.id] = createPlayer(x,y);
             this.addChild(this.players[change.path.id]);
         }
         if(change.operation === 'remove'){
@@ -148,7 +166,6 @@ export default class Example extends Container {
         this.mousepos.set(x, y);
     }
     mousedown() {
-        console.log('down');
         this.room.send({
             spell: {
                 type: 'force',
