@@ -17,17 +17,32 @@ export class State {
         delete this.players[ id ];
     }
 
-    movePlayer (id: string, movement: any) {
-        for(const m of movement){
-            switch(m){
-                case 'u': this.players[id].y -= MOVE_SPEED; break;
-                case 'd': this.players[id].y += MOVE_SPEED; break;
-                case 'l': this.players[id].x -= MOVE_SPEED; break;
-                case 'r': this.players[id].x += MOVE_SPEED; break;
-            }
-        }
+    movePlayer (id: string, movement: Array<string>) {
+        this.players[id].movement = movement;
     }
     update() {
+        //simulate player movement
+        for(const id in this.players) {
+            if(this.players[id].spell){
+                this.spells[id] = new Spell();
+                this.spells[id].x = this.players[id].x
+                this.spells[id].y = this.players[id].y
+                this.spells[id].targetX = this.players[id].spell.target.x;
+                this.spells[id].targetY = this.players[id].spell.target.y;
+                this.players[id].spell = null;
+            }
+            if(this.players[id].movement){
+                for(const m of this.players[id].movement){
+                    switch(m){
+                        case 'u': this.players[id].y -= MOVE_SPEED; break;
+                        case 'd': this.players[id].y += MOVE_SPEED; break;
+                        case 'l': this.players[id].x -= MOVE_SPEED; break;
+                        case 'r': this.players[id].x += MOVE_SPEED; break;
+                    }
+                }
+                this.players[id].movement = null;
+            }
+        }
         //simulate spell movement
         for (const id in this.spells) {
             const xDistance = this.spells[id].targetX - this.spells[id].x;
@@ -42,18 +57,18 @@ export class State {
             }
         }
     }
-    createSpell(id: string, spellData: any) {
-        this.spells[id] = new Spell();
-        this.spells[id].x = this.players[id].x
-        this.spells[id].y = this.players[id].y
-        this.spells[id].targetX = spellData.target.x;
-        this.spells[id].targetY = spellData.target.y;
+    createSpell(id: string, spell: any) {
+        this.players[id].spell = spell;
     }
 }
 
 export class Player {
     x = Math.random();
     y = Math.random();
+    @nosync
+    movement;
+    @nosync
+    spell;
 }
 export class Spell {
     x;
