@@ -48,11 +48,12 @@ Store.subscribe(() => {
 });
 
 // Dispatch from DOM to AppStore
+/*
 colorValueInput.addEventListener(
     'change', v => Store.dispatch(updateFilterColor(v.currentTarget.value)));
 colorOnInput.addEventListener(
     'change', v => Store.dispatch(updateFilterIsOn(v.currentTarget.checked)));
-
+*/
 const example = new WizardWars();
 example.setRenderer(renderer);
 app.addChild(example);

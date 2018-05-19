@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "colyseus": "^0.9.5",
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "shortid": "^2.2.8"
   },
   "devDependencies": {
     "ts-node": "^5.0.1",

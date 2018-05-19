@@ -1,13 +1,17 @@
 import { Room, EntityMap, Client, nosync } from "colyseus";
+import * as ShortId from 'shortid';
 
 const MOVE_SPEED = 0.003;
 const SPELL_MOVE_SPEED = 0.004;
+const SPELL_BASE_RADIUS = 0.02;
+const SPELL_MAX_RADIUS = 0.1;
+const SPELL_RADIUS_GROWTH_SPEED = 0.01;
+const KNOCKBACK_MOVE_SPEED = 0.02;
+const SPELL_COOLDOWN = 100;
+const SPELL_COOLDOWN_REDUCE_SPEED = 2;
 export class State {
     players: EntityMap<Player> = {};
     spells: EntityMap<Spell> = {};
-
-    @nosync
-    something = "This attribute won't be sent to the client-side";
 
     createPlayer (id: string) {
         this.players[ id ] = new Player();
@@ -15,6 +19,7 @@ export class State {
 
     removePlayer (id: string) {
         delete this.players[ id ];
+        delete this.spells[ id ];
     }
 
     movePlayer (id: string, movement: Array<string>) {
@@ -23,42 +28,69 @@ export class State {
     update() {
         //simulate player movement
         for(const id in this.players) {
-            if(this.players[id].spell){
-                this.spells[id] = new Spell();
-                this.spells[id].x = this.players[id].x
-                this.spells[id].y = this.players[id].y
-                this.spells[id].targetX = this.players[id].spell.target.x;
-                this.spells[id].targetY = this.players[id].spell.target.y;
-                this.players[id].spell = null;
+            const player = this.players[id];
+            if(player.cooldown > 0) {
+                player.cooldown -= SPELL_COOLDOWN_REDUCE_SPEED;
             }
-            if(this.players[id].movement){
-                for(const m of this.players[id].movement){
+            if(this.players[id].spell){
+                const spellId = ShortId.generate();
+                this.spells[spellId] = new Spell();
+                this.spells[spellId].x = player.x
+                this.spells[spellId].y = player.y
+                this.spells[spellId].targetX = player.spell.target.x;
+                this.spells[spellId].targetY = player.spell.target.y;
+                player.spell = null;
+                player.cooldown = SPELL_COOLDOWN;
+            }
+            if(player.movement){
+                for(const m of player.movement){
                     switch(m){
-                        case 'u': this.players[id].y -= MOVE_SPEED; break;
-                        case 'd': this.players[id].y += MOVE_SPEED; break;
-                        case 'l': this.players[id].x -= MOVE_SPEED; break;
-                        case 'r': this.players[id].x += MOVE_SPEED; break;
+                        case 'u': player.y -= MOVE_SPEED; break;
+                        case 'd': player.y += MOVE_SPEED; break;
+                        case 'l': player.x -= MOVE_SPEED; break;
+                        case 'r': player.x += MOVE_SPEED; break;
                     }
                 }
-                this.players[id].movement = null;
+                player.movement = null;
             }
         }
         //simulate spell movement
         for (const id in this.spells) {
-            const xDistance = this.spells[id].targetX - this.spells[id].x;
-            const yDistance = this.spells[id].targetY - this.spells[id].y;
+            const spell = this.spells[id];
+            const xDistance = spell.targetX - spell.x;
+            const yDistance = spell.targetY - spell.y;
             const length = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
             if(length < SPELL_MOVE_SPEED){
-
+                if(spell.radius < SPELL_MAX_RADIUS){
+                    spell.radius += SPELL_RADIUS_GROWTH_SPEED;
+                    this.pushBackPlayers(spell.x, spell.y, spell.radius);
+                }
+                else{
+                    delete this.spells[ id ];
+                }
             }
             else {
-                this.spells[id].x += (xDistance/length)*SPELL_MOVE_SPEED;
-                this.spells[id].y += (yDistance/length)*SPELL_MOVE_SPEED;
+                spell.x += (xDistance/length)*SPELL_MOVE_SPEED;
+                spell.y += (yDistance/length)*SPELL_MOVE_SPEED;
+            }
+        }
+    }
+    pushBackPlayers(x: number, y: number, radius: number) {
+        for (const id in this.players) {
+            const player = this.players[id];
+            const xDistance = player.x - x;
+            const yDistance = player.y - y;
+            const length = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+            if (length <= radius) {
+                player.x += (xDistance/length)*KNOCKBACK_MOVE_SPEED;
+                player.y += (yDistance/length)*KNOCKBACK_MOVE_SPEED;
             }
         }
     }
     createSpell(id: string, spell: any) {
-        this.players[id].spell = spell;
+        if (this.players[id].cooldown <= 0) {
+            this.players[id].spell = spell;
+        }
     }
 }
 
@@ -69,10 +101,12 @@ export class Player {
     movement;
     @nosync
     spell;
+    cooldown = 0;
 }
 export class Spell {
     x;
     y;
+    radius = SPELL_BASE_RADIUS;
     @nosync
     targetX;
     @nosync
