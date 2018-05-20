@@ -24,7 +24,7 @@ export default class WizardWars extends Container {
         //todo get now mousepos
         this.mousepos = new Point(0, 0);
         //ws stuff
-        this.client = new Client("ws://localhost:9100");
+        this.client = new Client("ws://"+document.domain+":9100");
         this.room = this.client.join("battle");
         this.room.registerPlaceholder(":radius", /radius/);
         this.room.registerPlaceholder(":cooldown", /cooldown/);
