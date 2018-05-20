@@ -4,31 +4,64 @@ import * as ShortId from 'shortid';
 const MOVE_SPEED = 0.003;
 const SPELL_MOVE_SPEED = 0.004;
 const SPELL_BASE_RADIUS = 0.02;
-const SPELL_MAX_RADIUS = 0.1;
+const SPELL_MAX_RADIUS = 0.12;
 const SPELL_RADIUS_GROWTH_SPEED = 0.01;
 const KNOCKBACK_MOVE_SPEED = 0.02;
 const SPELL_COOLDOWN = 100;
 const SPELL_COOLDOWN_REDUCE_SPEED = 2;
+const PLAYER_RADIUS = 0.02;
+const PLAYER_COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xff00ff];
+const PLAYER_STARTING_POS = [{x: 0.3, y: 0.3}, {x: 0.7, y:0.3}, {x: 0.3, y: 0.7}, {x: 0.7, y: 0.7}];
+const PLAYER_INDEX = [0,1,2,3];
+const getLength = (x1, y1, x2, y2) => {
+    const xDistance = x1 - x2;
+    const yDistance = y1 - y2;
+    return Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+};
 export class State {
     players: EntityMap<Player> = {};
     spells: EntityMap<Spell> = {};
+    platform: Platform = new Platform();
+    @nosync
+    playerIndex = [0,1,2,3];
 
     createPlayer (id: string) {
-        this.players[ id ] = new Player();
+        const playerIndex = this.playerIndex.pop();
+        const player = new Player()
+        player.index = playerIndex;
+        const position = PLAYER_STARTING_POS[playerIndex];
+        player.x = position.x;
+        player.y = position.y;
+        player.color = PLAYER_COLORS[playerIndex];
+        this.players[ id ] = player;
     }
 
     removePlayer (id: string) {
+        this.playerIndex.push(this.players[id].index);
         delete this.players[ id ];
-        delete this.spells[ id ];
     }
 
     movePlayer (id: string, movement: Array<string>) {
         this.players[id].movement = movement;
     }
+    isOnPlatform(player) {
+        const length = getLength(player.x, player.y, this.platform.x, this.platform.y);
+        if(length > this.platform.radius+ player.radius){
+            return false;
+        }
+        return true;
+    }
     update() {
         //simulate player movement
         for(const id in this.players) {
             const player = this.players[id];
+            if(player.dead) {
+                continue;
+            }
+            if(!this.isOnPlatform(player)) {
+                player.dead = true;
+                continue;
+            }
             if(player.cooldown > 0) {
                 player.cooldown -= SPELL_COOLDOWN_REDUCE_SPEED;
             }
@@ -81,7 +114,7 @@ export class State {
             const xDistance = player.x - x;
             const yDistance = player.y - y;
             const length = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-            if (length <= radius) {
+            if (length <= radius + player.radius) {
                 player.x += (xDistance/length)*KNOCKBACK_MOVE_SPEED;
                 player.y += (yDistance/length)*KNOCKBACK_MOVE_SPEED;
             }
@@ -95,13 +128,18 @@ export class State {
 }
 
 export class Player {
-    x = Math.random();
-    y = Math.random();
+    dead = false;
+    @nosync
+    index;
+    x;
+    y;
     @nosync
     movement;
     @nosync
     spell;
     cooldown = 0;
+    radius = PLAYER_RADIUS;
+    color;
 }
 export class Spell {
     x;
@@ -111,6 +149,11 @@ export class Spell {
     targetX;
     @nosync
     targetY;
+}
+export class Platform {
+    x=0.5;
+    y=0.5;
+    radius=0.4;
 }
 
 export class BattleRoom extends Room<State> {
@@ -130,6 +173,11 @@ export class BattleRoom extends Room<State> {
 
     onLeave (client) {
         this.state.removePlayer(client.sessionId);
+    }
+
+
+    requestJoin (options: any, isNew: boolean) {
+        return this.state.playerIndex.length > 0;
     }
 
     onMessage (client, data) {

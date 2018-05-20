@@ -1,38 +1,66 @@
 
-import {
-    Container,
-    Point
-} from 'pixi.js';
+import ScaledPosition from '../ScaledPosition';
 
-export default class Player extends PIXI.Graphics {
-    constructor(...args){
-        super(...args);
+
+const playerFilter = new PIXI.filters.BlurFilter();
+playerFilter.blur = 0.6;
+
+export default class Player extends ScaledPosition {
+    constructor(nx,ny,radius, color){
+        super(nx,ny);
+        this.playerBody = new PIXI.Graphics();
+        this.playerBody.beginFill(color);
+        const playerWidth = radius*this.oWidth*2;
+        const playerHeight = radius*this.oHeight*2;
+        this.playerBody.drawEllipse(0,0,playerWidth/2,playerHeight/2);
+        this.playerBody.filters = [playerFilter];
+        this.addChild(this.playerBody);
+        this.createCooldownBar(-playerWidth/2, - playerHeight, playerWidth, playerHeight/6);
     }
-    createCooldownBar(){
-        //Create the health bar
-        const healthBar = new PIXI.Container();
-        healthBar.position.set(-this.width/2, 4)
-        this.addChild(healthBar);
+    setDead(){
+        this.dead = true;
+        this.shrinkWidthSpeed = this.width/90;
+        this.shrinkHeightSpeed = this.height/90;
+    }
+    fallingAnimation(){
+        if(this.width > 0){
+            this.width -= this.shrinkWidthSpeed;
+        }
+        if(this.height > 0){
+            this.height -= this.shrinkHeightSpeed;
+        }
+    }
+    update(){
+        if(this.dead) {
+            this.fallingAnimation();
+        }
+    }
+    createCooldownBar(x, y, width, height){
+        //Create the bar container
+        const barContainer = new PIXI.Container();
+        barContainer.position.set(x, y)
+        this.playerBody.addChild(barContainer);
 
-        //Create the black background rectangle
-        let innerBar = new PIXI.Graphics();
+        //Create the green background rectangle
+        const innerBar = new PIXI.Graphics();
         innerBar.beginFill(0x00ff00);
-        innerBar.drawRect(0, 0, this.width, 8);
+        innerBar.drawRect(0, 0, width, height);
         innerBar.endFill();
-        healthBar.addChild(innerBar);
+        barContainer.addChild(innerBar);
 
         //Create the front red rectangle
-        let outerBar = new PIXI.Graphics();
-        outerBar.beginFill(0xFF3300);
-        outerBar.drawRect(0, 0, this.width/2, 8);
+        const outerBar = new PIXI.Graphics();
+        outerBar.beginFill(0x888888);
+        outerBar.drawRect(0, 0, width, height);
         outerBar.endFill();
-        healthBar.addChild(outerBar);
+        barContainer.addChild(outerBar);
 
         this.cooldownBar = outerBar;
+        this.cooldownBarWidth = width;
     }
     //from 0 - 100
     setCooldown(value) {
         value = value / 100;
-        this.cooldownBar.width = value*this.width;
+        this.cooldownBar.width = value*this.cooldownBarWidth;
     }
 }

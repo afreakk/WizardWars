@@ -40,11 +40,13 @@ AnimationStore.subscribe(() => {
 
 // Update DOM and App.filters from AppStore
 Store.subscribe(() => {
+    /*
     const {color, coloron} = Store.getState().App;
     colorOnInput.checked = coloron;
     colorValueInput.value = utils.hex2string(color);
     colorFilter.color = color;
     app.filters = coloron ? [colorFilter] : [];
+    */
 });
 
 // Dispatch from DOM to AppStore
