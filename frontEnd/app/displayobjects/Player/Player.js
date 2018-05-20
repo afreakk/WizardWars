@@ -16,6 +16,10 @@ export default class Player extends ScaledPosition {
         this.playerBody.filters = [playerFilter];
         this.addChild(this.playerBody);
         this.createCooldownBar(-playerWidth/2, - playerHeight, playerWidth, playerHeight/6);
+        this.wizzardHat = new PIXI.Graphics();
+        this.wizzardHat.beginFill(0x222222);
+        this.wizzardHat.drawEllipse(0,0,playerWidth/4, playerHeight/4)
+        this.playerBody.addChild(this.wizzardHat);
     }
     setDead(){
         this.dead = true;
