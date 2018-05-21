@@ -2,13 +2,13 @@ import { Room, EntityMap, Client, nosync } from "colyseus";
 import * as ShortId from 'shortid';
 
 const MOVE_SPEED = 0.003;
-const SPELL_MOVE_SPEED = 0.004;
+const SPELL_MOVE_SPEED = 0.005;
 const SPELL_BASE_RADIUS = 0.02;
 const SPELL_MAX_RADIUS = 0.12;
 const SPELL_RADIUS_GROWTH_SPEED = 0.01;
 const KNOCKBACK_MOVE_SPEED = 0.02;
 const SPELL_COOLDOWN = 100;
-const SPELL_COOLDOWN_REDUCE_SPEED = 2;
+const SPELL_COOLDOWN_REDUCE_SPEED = 5;
 const PLAYER_RADIUS = 0.02;
 const PLAYER_COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xff00ff];
 const PLAYER_STARTING_POS = [{x: 0.3, y: 0.3}, {x: 0.7, y:0.3}, {x: 0.3, y: 0.7}, {x: 0.7, y: 0.7}];
@@ -65,7 +65,7 @@ export class State {
             if(player.cooldown > 0) {
                 player.cooldown -= SPELL_COOLDOWN_REDUCE_SPEED;
             }
-            if(this.players[id].spell){
+            if(player.spell && player.cooldown <= 0){
                 const spellId = ShortId.generate();
                 this.spells[spellId] = new Spell();
                 this.spells[spellId].x = player.x
@@ -121,9 +121,7 @@ export class State {
         }
     }
     createSpell(id: string, spell: any) {
-        if (this.players[id].cooldown <= 0) {
-            this.players[id].spell = spell;
-        }
+        this.players[id].spell = spell;
     }
 }
 
