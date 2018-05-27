@@ -156,6 +156,7 @@ export class Platform {
 
 export class BattleRoom extends Room<State> {
     onInit (options) {
+        this.setPatchRate(16.6);
         console.log("BattleRoom created!", options);
 
         this.setState(new State());
@@ -179,7 +180,6 @@ export class BattleRoom extends Room<State> {
     }
 
     onMessage (client, data) {
-        console.log("BattleRoom received message from", client.sessionId, ":", data);
         if(data.move){
             this.state.movePlayer(client.sessionId, data.move);
         }
