@@ -19,10 +19,18 @@ export default class Spell extends ScaledPosition {
         this.initialRadius = radius;
     }
     scaleRadius(radius){
+        //actually just scale the spellbody, but i guess its 1 to begin with
         const scale = radius/this.initialRadius;
-        this.scale.set(scale, scale);
+        this.spellBody.scale.set(scale, scale);
+        this.radius = radius;
     }
     update(){
-        this.spellNoiseFilter += 0.0000002;
+        if(this.radius > this.initialRadius){
+            this.spellNoiseFilter.seed += 0.1;
+            this.spellNoiseFilter.noise += 0.1;
+        }
+        else {
+            this.spellNoiseFilter.seed += 0.0003;
+        }
     }
 }
